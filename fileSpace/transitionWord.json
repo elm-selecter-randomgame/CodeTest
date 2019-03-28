@@ -1,18 +1,18 @@
 {
   "content":[
-    {"line": "PUSH    DS", "address": 0x070018B},
-    {"line": "PUSH    AX", "address": 0x070018B},
-    {"line": "MOV    AX,0040", "address": 0x070018B},
-    {"line": "MOV    DS,AX", "address": 0x070018B},
-    {"line": "TEST    WORD PTR [0314],2400", "address": 0x070018B},
-    {"line": "JNZ    01E9", "address": 0x070018B},
-    {"line": "PUSH    BP", "address": 0x070018B},
-    {"line": "MOV    BP,SP", "address": 0x070018B},
-    {"line": "MOV    AX,[BP+0A]", "address": 0x070018B},
-    {"line": "POP    BP", "address": 0x070018B},
-    {"line": "TEST    AX,0100", "address": 0x070018B},
-    {"line": "JNZ    01E9", "address": 0x070018B},
-    {"line": "TEST    AX,0200", "address": 0x070018B},
-    {"line": "JZ      01CD", "address": 0x070018B}
+    {"line": "PUSH    DS", "address": "0x070018B"},
+    {"line": "PUSH    AX", "address": "0x070018B"},
+    {"line": "MOV    AX,0040", "address": "0x070018B"},
+    {"line": "MOV    DS,AX", "address": "0x070018B"},
+    {"line": "TEST    WORD PTR [0314],2400", "address": "0x070018B"},
+    {"line": "JNZ    01E9", "address": "0x070018B"},
+    {"line": "PUSH    BP", "address": "0x070018B"},
+    {"line": "MOV    BP,SP", "address": "0x070018B"},
+    {"line": "MOV    AX,[BP+0A]", "address": "0x070018B"},
+    {"line": "POP    BP", "address": "0x070018B"},
+    {"line": "TEST    AX,0100", "address": "0x070018B"},
+    {"line": "JNZ    01E9", "address": "0x070018D"},
+    {"line": "TEST    AX,0200", "address": "0x080018B"},
+    {"line": "JZ      01CD", "address": "0x090018B"}
   ]
 }

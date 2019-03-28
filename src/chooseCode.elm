@@ -9,9 +9,11 @@ import Html.Events exposing (onClick,onInput)
 import Http
 import Random
 import Random.List exposing (..)
-import Json.Decode exposing (..)
+import Json.Decode as JD
 import Hex exposing (..)
 import Array exposing (..)
+import Url exposing (..)
+import Url.Builder as UB
 
 
 main =
@@ -23,13 +25,13 @@ subscriptions model =
 
 
 --解析json数据把json中的content数组解成elm中的[{linecode = "",address = ""}..]
-codeDecoder : Decoder Codes
+codeDecoder : JD.Decoder Codes
 codeDecoder =
-    Json.Decode.field "content"
-        (Json.Decode.list
-            (Json.Decode.map2 Code
-                (Json.Decode.field "line" string)
-                (Json.Decode.field "address" string)
+    JD.field "content"
+        (JD.list
+            (JD.map2 Code
+                (JD.field "line" JD.string)
+                (JD.field "address" JD.string)
             )
         )
 
@@ -42,7 +44,12 @@ type alias Codes =
     List Code
 type alias Content = List String
 type alias Model =
-  {leftDiv : String, centerDiv : Codes, rightDiv : String, onClickLine : String}
+  {leftDiv : String
+  , centerDiv : Codes
+  , rightDiv : String
+  , onClickLine : String
+  , changeUrl : String --储存更改的url
+  }
 
 
 init : () -> (Model,Cmd Msg)
@@ -51,11 +58,11 @@ init _=
   leftDiv = ""
   ,centerDiv = []
   ,rightDiv = ""
-  ,onClickLine = ""}
+  ,onClickLine = ""
+  ,changeUrl = "/fileSpace/transitionWord.json"}
   ,Http.get
       { url = "/fileSpace/transitionWord.json" --本地json文件
-      , expect = Http.expectString GetWord
-      })
+      , expect = Http.expectString GetWord})
 
 
 
@@ -64,6 +71,7 @@ type Msg =
           Display
         | GetWord (Result Http.Error String)
         | GetIndex Int
+        | ChangeUrl String
 
 update : Msg -> Model -> (Model,Cmd Msg)
 update msg model =
@@ -73,7 +81,7 @@ update msg model =
     GetWord result ->
       case result of
         Ok fullText ->
-          case decodeString codeDecoder fullText of
+          case JD.decodeString codeDecoder fullText of
           Ok listContent ->
             ({model | centerDiv = listContent},Cmd.none)
           Err _ ->
@@ -82,9 +90,30 @@ update msg model =
           ({model | centerDiv = []},Cmd.none)
     GetIndex index ->
       ({model | onClickLine = (String.fromInt (index+1))},Cmd.none)
+    ChangeUrl url ->
+      (if String.contains "?" model.changeUrl then
+      {model | changeUrl = UB.relative [(String.left
+          (tranMaybe (List.head (String.indexes "?" model.changeUrl)))
+          model.changeUrl)] [UB.string "address"
+          (case transitionHex url of
+            Ok number ->
+              String.fromInt number
+            Err _ ->
+              "cuowu")]}
+              else
+        {model | changeUrl = UB.relative [model.changeUrl]
+      [UB.string "address" (case transitionHex url of
+        Ok number ->
+          String.fromInt number
+        Err _ ->
+          "cuowu")]},Cmd.none)
 
 getContent string =
-  Json.Decode.list string
+  JD.list string
+
+--把maybe类型的数字转化为int型
+tranMaybe string =
+  Maybe.withDefault 1000 string
 
 view : Model -> Html Msg
 view model =
@@ -95,7 +124,7 @@ view model =
   ,button [onClick Display, class "transition"] [text "转化"]
   ,div [class "attribute"] [text ("get line by onClick："++ model.onClickLine)]]
 
-  ,div [class "rightDiv"] [text model.rightDiv]
+  ,div [class "rightDiv"] [text model.changeUrl]
   ]
 
 --拆解获取的code每一行显示到<div>中
@@ -103,7 +132,7 @@ dismantling : Model -> List (Html Msg)
 dismantling model =
   List.map (\x -> div [onClick (GetIndex (Tuple.first x))]
    [
-  span [] [text (case transitionHex ((Tuple.second x).address) of
+  span [onClick (ChangeUrl ((Tuple.second x).address)) ] [text (case transitionHex ((Tuple.second x).address) of
     Ok number ->
       String.fromInt number
     Err _ ->
