@@ -114,21 +114,25 @@ update msg model =
       ({model | onClickLine = (String.fromInt (index+1))},Cmd.none)
     UrlChanged url ->
       (if String.contains "?" (Url.toString model.url) then
-      {model | url = Just (Url.fromString (UB.relative [(String.left
+      {model | url = (case (Url.fromString (UB.relative [(String.left
           (tranMaybeInt (List.head (String.indexes "?" (Url.toString model.url))))
           (Url.toString model.url))] [UB.string "address"
           (case transitionHex (Url.toString url) of
             Ok number ->
               String.fromInt number
             Err _ ->
-              "cuowu")]))}
+              "cuowu")])) of
+              Just transUrl -> transUrl
+              Nothing -> model.url)}
               else
-        {model | url = Just (Url.fromString (UB.relative [(Url.toString model.url)]
+        {model | url = case (Url.fromString (UB.relative [(Url.toString model.url)]
       [UB.string "address" (case transitionHex (Url.toString url) of
         Ok number ->
           String.fromInt number
         Err _ ->
-          "cuowu")]))},Cmd.none)
+          "cuowu")])) of
+            Just transUrl -> transUrl
+            Nothing -> model.url},Cmd.none)
     LinkClicked urlRequest ->
         case urlRequest of
           Browser.Internal url ->
@@ -142,14 +146,22 @@ update msg model =
     --   , Cmd.none
     --   )
 
+{-把maybe的url转为url
+case Url.fromString value of
+   Just url ->  handleUrl url
+   Nothing -> handleInvalidUrlString value
+
+   stringValue |> Url.fromString  |> Maybe.map handleUrl |> Maybe.withDefault (handleInvalidUrlString stringValue)
+-}
+
 
 
 --把maybe类型的数字转化为int型
 tranMaybeInt string =
   Maybe.withDefault 1000 string
 --把string类型的url转化为Url
-tranMaybeString string =
-  Maybe.withDefault Url.Url string
+-- tranMaybeString url =
+--   Maybe.withDefault Url.Url string
 
 view : Model -> Browser.Document Msg
 view model =
