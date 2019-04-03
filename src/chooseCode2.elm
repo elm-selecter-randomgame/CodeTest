@@ -16,7 +16,7 @@ import Array exposing (..)
 import Url exposing (..)
 import Url.Builder as UB
 import Url.Parser exposing (Parser, (</>), int, map, oneOf, s, string )
-import Url.Parser.Query as PQ
+import Debug
 
 main : Program () Model Msg
 main =
@@ -34,44 +34,23 @@ subscriptions model =
 
 
 --解析json数据把json中的content数组解成elm中的[{linecode = "",address = ""}..]
-codeDecoder : JD.Decoder Codes
+codeDecoder : JD.Decoder Address
 codeDecoder =
-    JD.field "content"
-        (JD.list
-            (JD.map2 Code
-                (JD.field "line" JD.string)
-                (JD.field "address" JD.string)
-            )
-        )
+    JD.field "address" (JD.list JD.string)
 
 --Model
-type alias Code =
-    { linecode : String
-    , address : String
-    }
-type alias Codes =
-    List Code
+type alias Address = List String
 type alias Content = List String
 type alias Model =
   {leftDiv : String
-  , centerDiv : Codes
-  , rightDiv : Codes
+  , centerDiv : Address
+  , rightDiv : Address
   , onClickLine : String
   , changeUrl : String --储存更改的url
   , key : Nav.Key --更改url必须的key
   , url : Url.Url
   }
 
-{-
-type alias Url =
-    { protocol : Protocol
-    , host : String
-    , port_ : Maybe Int
-    , path : String
-    , query : Maybe String
-    , fragment : Maybe String
-    }
--}
 
 init : () -> Url.Url -> Nav.Key -> (Model,Cmd Msg)
 init flags url key=
@@ -84,7 +63,7 @@ init flags url key=
   ,key = key
   ,url = url}
   ,Http.post
-      { url = "/fileSpace/transitionWord.json" --本地json文件
+      { url = "http://192.168.0.14:3000/init" --本地json文件
       , body = Http.emptyBody
       , expect = Http.expectString GetWord})
 
@@ -95,7 +74,7 @@ type Msg =
           Display
         | GetWord (Result Http.Error String)
         | GetIndex Int
-        -- | ChangeUrl String
+        | ChangeUrl String
         | LinkClicked Browser.UrlRequest
         | UrlChanged Url.Url
 
@@ -109,37 +88,37 @@ update msg model =
         Ok fullText ->
           case JD.decodeString codeDecoder fullText of
           Ok listContent ->
-            ({model | centerDiv = listContent},Cmd.none)
+            Debug.log "this" ({model | centerDiv = listContent},Cmd.none)
           Err _ ->
-            ({model | centerDiv = []},Cmd.none)
+            Debug.log "1"  ({model | centerDiv = []},Cmd.none)
         Err _ ->
-          ({model | centerDiv = []},Cmd.none)
+          Debug.log "33"  ({model | centerDiv = []},Cmd.none)
     GetIndex index ->
       ({model | onClickLine = (String.fromInt (index+1))},Cmd.none)
     UrlChanged url ->
-      -- (if String.contains "?" (Url.toString model.url) then
-      -- {model | url = (case (Url.fromString (UB.relative [(String.left
-      --     (tranMaybeInt (List.head (String.indexes "?" (Url.toString model.url))))
-      --     (Url.toString model.url))] [])) of
-      --         Just transUrl -> transUrl
-      --         Nothing -> model.url)}
-      --         else
-      --   {model | url = case (Url.fromString (UB.relative [(Url.toString model.url)]
-      -- [])) of
-      --       Just transUrl -> transUrl
-      --       Nothing -> model.url},Cmd.none)
-      ({model | url = url},Cmd.none)
+      (if String.contains "?" (Url.toString model.url) then
+      {model | url = (case (Url.fromString (UB.relative [(String.left
+          (tranMaybeInt (List.head (String.indexes "?" (Url.toString model.url))))
+          (Url.toString model.url))] [])) of
+              Just transUrl -> transUrl
+              Nothing -> model.url)}
+              else
+        {model | url = case (Url.fromString (UB.relative [(Url.toString model.url)]
+      [])) of
+            Just transUrl -> transUrl
+            Nothing -> model.url},Cmd.none)
     LinkClicked urlRequest ->
         case urlRequest of
           Browser.Internal url ->
-            -- (model
+            -- ({model | changeUrl = model.changeUrl}
             -- ,Http.post{
             -- url = "/fileSpace/transitionWord.json"
             -- ,body = jsonBody (JE.object [("address", JE.string "7340429" )])
             -- ,expect = Http.expectString GetWord
             -- })
-            (model
-            ,Nav.pushUrl model.key (Url.toString url))
+            ({model | changeUrl = model.changeUrl},
+            Nav.pushUrl model.key
+            (UB.absolute [Url.toString (model.url) ] [ UB.string "address" model.changeUrl]))
           Browser.External href ->
             (model
             ,Nav.load href)
@@ -153,10 +132,10 @@ update msg model =
     --         ({model | rightDiv = []},Cmd.none)
     --     Err _ ->
     --       ({model | rightDiv = []},Cmd.none)
-    -- ChangeUrl urlAddress ->
-    --   ( { model | changeUrl = urlAddress }
-    --   , Cmd.none
-    --   )
+    ChangeUrl urlAddress ->
+      ( { model | changeUrl = urlAddress }
+      , Cmd.none
+      )
 
 {-把maybe的url转为url
 case Url.fromString value of
@@ -199,35 +178,27 @@ view model =
 dismantling : Model -> List (Html Msg)
 dismantling model =
   List.map (\x -> div [onClick (GetIndex (Tuple.first x))]
-   [
-   --onClick (ChangeUrl ((Tuple.second x).address))
-  a [ href (UB.crossOrigin (Url.toString model.url) ["code"] [UB.string "address" (case transitionHex ((Tuple.second x).address) of
-    Ok number ->
-      String.fromInt number
-    Err _ ->
-      "123")]) ] [text (case transitionHex ((Tuple.second x).address) of
-    Ok number ->
-      String.fromInt number
-    Err _ ->
-      "123")],
-  span [ style "display" "inline-block", style "width"  "20px" ] [],
-  span [] [text ((Tuple.second x).linecode)],
-  span [] [text (PQ.string "address")]
-        ]) (transitionList model)
+   [ a [ href (Tuple.second x),onClick (ChangeUrl (Tuple.second x)) ] [ text (Tuple.second x) ] ]) (transitionList model)
 
 --获取的address字符串转化为全部为小写的字母Array
 stringtoChar x =
   Array.fromList (List.map (\a -> Char.toLower a) (String.toList x ))
 
-
+{-
+(UB.absolute ["src","chooseCode1.elm",(case transitionHex ((Tuple.second x).address) of
+  Ok number ->
+    String.fromInt number
+  Err _ ->
+    "123") ] [])
+-}
 
 
 --x代表address默认传进来的数就是16进制数，把String的address转化10进制的int
-transitionHex x =
-  if ((String.fromChar (Maybe.withDefault '0' (Array.get 0 (stringtoChar x)))) ++
-    (String.fromChar (Maybe.withDefault 'x' (Array.get 1 (stringtoChar x))))) == "0x"
-        then Hex.fromString (String.fromList (Array.toList (Array.set 1 '0' (stringtoChar x))))
-        else Hex.fromString x
+-- transitionHex x =
+--   if ((String.fromChar (Maybe.withDefault '0' (Array.get 0 (stringtoChar x)))) ++
+--     (String.fromChar (Maybe.withDefault 'x' (Array.get 1 (stringtoChar x))))) == "0x"
+--         then Hex.fromString (String.fromList (Array.toList (Array.set 1 '0' (stringtoChar x))))
+--         else Hex.fromString x
 
 --x代表address默认传进来的数就是16进制数，把String的address转化10进制的int(得到一个Result String Int)
 -- transitionHex x =
