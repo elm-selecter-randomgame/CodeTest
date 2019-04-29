@@ -1,7 +1,5 @@
 module Main exposing (main)
 
--- import Css exposing (..)
-
 import Array exposing (..)
 import Browser
 import Debug exposing (..)
@@ -105,7 +103,6 @@ type Msg
     | ChangeTestCasesTestOutput String
     | ChangeTestCasesValidaterInput String
     | ChangeTestCasesValidaterOutput String
-    | ChangeTestCases TestCases
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -120,41 +117,40 @@ update msg model =
                     ( model, Cmd.none )
 
         PushDate ->
-            Debug.log "ceshi"
-                ( model
-                , Http.post
-                    { url = "/code"
-                    , body =
-                        Http.jsonBody
-                            (Encode.object
-                                [ ( "title", Encode.string model.title )
-                                , ( "statement", Encode.string model.statement )
-                                , ( "inputDescription", Encode.string model.inputDescription )
-                                , ( "outputDescription", Encode.string model.outputDescription )
-                                , ( "constraints", Encode.string model.constraints )
-                                , ( "testCases"
-                                  , Encode.object
-                                        [ ( "testName", Encode.string model.testCases.testName )
-                                        , ( "validator", Encode.string model.testCases.validator )
-                                        , ( "test"
-                                          , Encode.object
-                                                [ ( "input", Encode.string model.testCases.test.input )
-                                                , ( "output", Encode.string model.testCases.test.output )
-                                                ]
-                                          )
-                                        , ( "validater"
-                                          , Encode.object
-                                                [ ( "input", Encode.string model.testCases.validater.input )
-                                                , ( "output", Encode.string model.testCases.validater.output )
-                                                ]
-                                          )
-                                        ]
-                                  )
-                                ]
-                            )
-                    , expect = Http.expectString Display
-                    }
-                )
+            ( model
+            , Http.post
+                { url = "/code"
+                , body =
+                    Http.jsonBody
+                        (Encode.object
+                            [ ( "title", Encode.string model.title )
+                            , ( "statement", Encode.string model.statement )
+                            , ( "inputDescription", Encode.string model.inputDescription )
+                            , ( "outputDescription", Encode.string model.outputDescription )
+                            , ( "constraints", Encode.string model.constraints )
+                            , ( "testCases"
+                              , Encode.object
+                                    [ ( "testName", Encode.string model.testCases.testName )
+                                    , ( "validator", Encode.string model.testCases.validator )
+                                    , ( "test"
+                                      , Encode.object
+                                            [ ( "input", Encode.string model.testCases.test.input )
+                                            , ( "output", Encode.string model.testCases.test.output )
+                                            ]
+                                      )
+                                    , ( "validater"
+                                      , Encode.object
+                                            [ ( "input", Encode.string model.testCases.validater.input )
+                                            , ( "output", Encode.string model.testCases.validater.output )
+                                            ]
+                                      )
+                                    ]
+                              )
+                            ]
+                        )
+                , expect = Http.expectString Display
+                }
+            )
 
         ChangeTitle newTitle ->
             ( { model | title = newTitle }, Cmd.none )
@@ -188,9 +184,6 @@ update msg model =
 
         ChangeTestCasesValidaterOutput newTestCasesValidaterOutput ->
             updateTestCasesValidater (\validater -> { validater | output = newTestCasesValidaterOutput }) model.testCases model
-
-        ChangeTestCases newTestCases ->
-            ( model, Cmd.none )
 
 
 updateTestName : (TestCases -> TestCases) -> Model -> ( Model, Cmd Msg )
@@ -529,17 +522,6 @@ view model =
                         [ text "测试在IDE" ]
                     ]
                 ]
-            ]
-        , div []
-            [ div [] [ text model.title ]
-            , div [] [ text model.statement ]
-            , div [] [ text model.inputDescription ]
-            , div [] [ text model.outputDescription ]
-            , div [] [ text model.constraints ]
-            , div [] [ text model.testCases.test.input ]
-            , div [] [ text model.testCases.test.output ]
-            , div [] [ text model.testCases.validater.input ]
-            , div [] [ text model.testCases.validater.output ]
             ]
         ]
 
