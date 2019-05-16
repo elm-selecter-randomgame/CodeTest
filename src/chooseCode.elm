@@ -3,6 +3,7 @@
 -- import List.Extra exposing (getAt, removeAt)
 
 import Browser
+import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick,onInput)
@@ -17,7 +18,12 @@ import Url.Builder as UB
 
 
 main =
-  Browser.element{init = init, update = update, view = view, subscriptions = subscriptions}
+  Browser.application{init = init
+  , update = update
+  , view = view
+  , subscriptions = subscriptions
+  , onUrlRequest = update
+  , onUrlChange = update}
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -72,6 +78,7 @@ type Msg =
         | GetWord (Result Http.Error String)
         | GetIndex Int
         | ChangeUrl String
+        | ClickedLink Browser.UrlRequest
 
 update : Msg -> Model -> (Model,Cmd Msg)
 update msg model =
@@ -107,6 +114,14 @@ update msg model =
           String.fromInt number
         Err _ ->
           "cuowu")]},Cmd.none)
+    ClickedLink urlRequest ->
+        case urlRequest of
+          Internal url ->
+            (model
+            ,Nav.pushUrl model.key (Url.toString url))
+          External url ->
+            (model
+            ,Nav.load url)
 
 getContent string =
   JD.list string

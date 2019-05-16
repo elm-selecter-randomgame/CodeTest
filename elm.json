@@ -11,6 +11,7 @@
             "elm/html": "1.0.0",
             "elm/http": "2.0.0",
             "elm/json": "1.1.3",
+<<<<<<< HEAD
             "elm/random": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/random-extra": "3.0.0",
@@ -21,6 +22,20 @@
             "elm/file": "1.0.5",
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.2"
+=======
+            "rtfeldman/elm-css": "16.0.1",
+            "rundis/elm-bootstrap": "5.1.0"
+        },
+        "indirect": {
+            "Skinney/murmur3": "2.0.8",
+            "avh4/elm-color": "1.0.0",
+            "elm/bytes": "1.0.8",
+            "elm/file": "1.0.5",
+            "elm/time": "1.0.0",
+            "elm/url": "1.0.0",
+            "elm/virtual-dom": "1.0.2",
+            "rtfeldman/elm-hex": "1.0.0"
+>>>>>>> 8ce3416f5dc47f7ba6c71e9400ae75280a4e72fc
         }
     },
     "test-dependencies": {
